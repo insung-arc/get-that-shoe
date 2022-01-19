@@ -1,6 +1,8 @@
 
+from pickletools import optimize
 import matplotlib.pyplot as plt
 import tensorflow as tf
+import random
 import shutil
 import string
 import re
@@ -98,7 +100,7 @@ test_ds = raw_test_ds.map(vectorize_text)
 print("###### Configure the dataset for perfomance ######")
 AUTOTUNE = tf.data.AUTOTUNE
 train_ds = train_ds.cache().prefetch(buffer_size=AUTOTUNE)
-val_ds = train_ds.cache().perfetch(buffer_size=AUTOTUNE)
+val_ds = train_ds.cache().prefetch(buffer_size=AUTOTUNE)
 test_ds = train_ds.cache().prefetch(buffer_size=AUTOTUNE)
 
 print("###### Create the model ######")
@@ -112,3 +114,88 @@ model = tf.keras.Sequential([
 ])
 
 model.summary()
+
+print("###### Loss fuction and optimizer ######")
+'''This part is important for the engaging tensorflow model fuctional order
+Loss is like a study score that negative things and optimizer is study from the loss'''
+model.compile(loss      = losses.BinaryCrossentropy(from_logits=True),
+              optimizer = 'adam',
+              metrics   = tf.metrics.BinaryAccuracy(threshold=0.0))
+
+print("###### Train Model ######")
+'''Finally train model
+study from the datasets that we fitted to method'''
+epochs = 10
+history = model.fit(
+    train_ds,
+    validation_data = val_ds,
+    epochs = epochs
+)
+
+print("###### Evaluate the model ######")
+'''Evaluating is like a testbench that model performs who it works
+Loss and acccuracy will return'''
+
+loss, accuracy = model.evaluate(test_ds)
+print("Loss \t:", loss)
+print("Accuracy \t:", accuracy)
+
+history_dict = history.history
+print(history_dict.keys())
+
+acc = history_dict['binary_accuracy']
+val_acc = history_dict['val_binary_accuracy']
+loss = history_dict['loss']
+val_loss = history_dict['val_loss']
+
+epochs = range(1, len(acc) + 1)
+
+'''Training and validation accuracy
+On just below code is for the loss'''
+plt.plot(epochs, loss, 'bo', label='Training loss')
+plt.plot(epochs, val_loss, 'b', label='Validation loss')
+plt.title('Training and validation loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.legend()
+plt.show()
+
+'''And this code is for the accuracy'''
+plt.plot(epochs, acc, 'bo', label='Training acc')
+plt.plot(epochs, val_acc, 'b', label='Validation acc')
+plt.title('Training and validation accuracy')
+plt.xlabel('Epochs')
+plt.ylabel('Accuracy')
+plt.legend(loc='lower right')
+plt.show()
+
+'''Export the model
+Okay, the time is back. Now we have to make export model that called weights 
+that I just trained. Let's try it.'''
+
+export_model = tf.keras.Sequential([
+    vectorize_layer, 
+    model, 
+    layers.Activation('sigmoid')
+])
+
+export_model.compile(
+    loss = losses.BinaryCrossentropy(from_logits=False), optimizer = "adam", metrics = ['accuracy']
+)
+
+loss, accuracy = export_model.evaluate(raw_test_ds)
+print(accuracy)
+
+examples = [
+    "The movie was great!",
+    "The movie was okay.",
+    "The movie was terrible..."
+]
+
+'''
+examples_dir = "./archive/" + random.choice(os.listdir("./archive/"))
+examples = open(examples_dir, "r")
+examples = examples.read()
+'''
+
+export_model.predict(examples)
