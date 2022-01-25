@@ -1,4 +1,4 @@
-
+# https://www.tensorflow.org/tutorials/keras/text_classification
 from pickletools import optimize
 import matplotlib.pyplot as plt
 import tensorflow as tf
