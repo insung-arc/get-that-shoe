@@ -1,5 +1,6 @@
 # https://www.tensorflow.org/tutorials/keras/regression
 from os import sep
+from pickletools import optimize
 from tensorflow import keras
 from tensorflow.keras import layers
 import matplotlib as plt
@@ -45,4 +46,33 @@ train_label = train_feature.pop('MPG')
 test_label = test_feature.pop('MPG')
 
 # normalization on each features.
-train_dataset.describe().transpose[['mean', 'std']]
+train_dataset.describe().transpose()[['mean', 'std']]
+
+# normalization layer
+normalizer = tf.keras.layers.Normalization(axis=-1)
+normalizer.adapt(np.array(train_feature))
+print(normalizer.mean.numpy())
+
+first_layer = np.array(train_feature[:1])
+with np.printoptions(precision=2, suppress=True):
+    print("First Example: ", first_layer)
+    print()
+    print('Normalized :', normalizer(first_layer).numpy())
+
+## https://www.tensorflow.org/tutorials/keras/regression#linear_regression 
+horsepower = np.array(train_feature['Horsepower'])
+
+horsepower_normalized = layers.Normalization(input_shape=[1,], axis=None)
+horsepower_normalized.adapt(horsepower)
+
+horsepower_model = tf.keras.Sequential([
+    horsepower_normalized,
+    layers.Dense(units=1)
+])
+
+horsepower_model.summary()
+horsepower_model.predict(horsepower[:10])
+horsepower_model.compile(
+    optimizer=tf.optimizers.Adam(learning_rate=0.1), 
+    loss='mean_absolute_error'
+)
