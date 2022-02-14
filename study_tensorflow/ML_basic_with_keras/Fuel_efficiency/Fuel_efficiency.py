@@ -1,9 +1,10 @@
 # https://www.tensorflow.org/tutorials/keras/regression
 from os import sep
 from pickletools import optimize
+from tabnanny import verbose
 from tensorflow import keras
 from tensorflow.keras import layers
-import matplotlib as plt
+import matplotlib.pyplot as plt
 import tensorflow as tf
 import seaborn as sns
 import pandas as pd
@@ -72,7 +73,41 @@ horsepower_model = tf.keras.Sequential([
 
 horsepower_model.summary()
 horsepower_model.predict(horsepower[:10])
+
+# Model setting up by Adam
 horsepower_model.compile(
     optimizer=tf.optimizers.Adam(learning_rate=0.1), 
     loss='mean_absolute_error'
+)
+
+# and execute training for 100 epochs
+history = horsepower_model.fit(
+    train_feature['Horsepower'],
+    train_label,
+    epochs=100,
+    verbose=0,
+    validation_split=0.2
+)
+
+# training progress using by history object
+hist = pd.DataFrame(history.history)
+hist['epoch'] = history.epoch
+print("###### hist Tail print ######")
+print(hist.tail())
+
+def plot_loss(history):
+    plt.plot(history.history['loss'], label='loss')
+    plt.plot(history.history['val_loss'], label='val_loss')
+    plt.ylim([0, 10])
+    plt.xlabel('Epoch')
+    plt.ylabel('error [MPG]')
+    plt.legend()
+    plt.grid(True)
+
+plot_loss(history)
+
+test_result = {}
+test_result['horsepower_model'] = horsepower_model.evaluate(
+    test_feature['Horsepower'],
+    test_label, verbose=0
 )
